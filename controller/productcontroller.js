@@ -3,8 +3,8 @@ const User  = require('../models/employeemodel')
 const asynchandler = require('express-async-handler')
 const slugify = require('slugify')
 const validateMongoID = require('../utils/validatemongoid')
-const  {cloudinaryUploadImg} = require('../utils/cloudinary')
-const fs = require('fs')
+//const validateMongoID = require('../utils/validatemongoid')
+
 //Create Product
 const createproduct = asynchandler(async(req,res) => {
 try{
@@ -21,8 +21,9 @@ try{
 //get a product
 const getaproduct = asynchandler(async(req,res) => {
     const { id } = req.params;
+    validateMongoID(id);
     try{
-        const findProduct = await Product.findById(id);
+        const findProduct = await Product.findById(id).populate("color");
         res.json(findProduct)
 
     }catch(error){
@@ -187,41 +188,7 @@ const rating = asynchandler ( async (req,res ) => {
     }
 })
 
-const uploadImages = asynchandler(async (req, res) => {
-    const { id } = req.params;// remove
-    console.log(req.files); //remove
-    validateMongoID(id);// remove
-    try {
-      const uploader = (path) => cloudinaryUploadImg(path, "image");
-      const urls = [];
-      const files = req.files;
-      for (const file of files) {
-        const { path } = file;
-        const newpath = await uploader(path);
-        console.log(newpath);
-        urls.push(newpath);
-        fs.unlinkSync(path); //Watch 2 vid
-      }
-        // const images = urls.map((file) => {Later
-        //     return file;
-        // });
-        // res.json(images)
-      const findProduct = await Product.findByIdAndUpdate(
-        id,
-        {
-          images: urls.map((file) => {
-            return file;
-          }),
-        },
-        {
-          new: true,
-        }
-      );
-      res.json(findProduct);
-    }catch (error) {
-      throw new Error(error);
-    }
-  });
+
   
 
-module.exports = {createproduct , getaproduct , getallproduct , updateProduct ,uploadImages, deleteProduct , AddtoWishlist , rating}
+module.exports = {createproduct , getaproduct , getallproduct , updateProduct , deleteProduct , AddtoWishlist , rating}
