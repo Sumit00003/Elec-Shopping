@@ -6,7 +6,7 @@ const fs = require("fs");
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, "../public/images/"));
+    cb(null, path.join(__dirname, "../public/images"));
   },
   filename: function (req, file, cb) {
     const uniquesuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
@@ -29,6 +29,7 @@ const uploadPhoto = multer({
 });
 
 const productImgResize = async (req, res, next) => {
+  console.log(req.files);
   if (!req.files) return next();
   await Promise.all(
     req.files.map(async (file) => {
@@ -37,7 +38,7 @@ const productImgResize = async (req, res, next) => {
         .toFormat("jpeg")
         .jpeg({ quality: 90 })
         .toFile(`public/images/products/${file.filename}`);
-      fs.unlinkSync(`public/images/products/${file.filename}`);
+        fs.unlinkSync(`public/images/products/${file.filename}`);
     })
   );
   next();
