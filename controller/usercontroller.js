@@ -281,7 +281,7 @@ const forgotPasswordToken = asyncHandler(async (req,res) => {
     try{
         const token = await user.createPasswordResetToken();
         await user.save();
-        const resetURL = `Hii , Please follow this link to reset Your Password, This link is valid till 10 minutes from now. <a href='http:localhost:5000/api/user/reset-password/${token}'>Click Here</a>`
+        const resetURL = `Hii , Please follow this link to reset Your Password, This link is valid till 10 minutes from now. <a href='http://localhost:3000/reset-password/${token}'>Click Here</a>`
         const data={
             to:email,
             text:"Hey User",
@@ -297,21 +297,21 @@ const forgotPasswordToken = asyncHandler(async (req,res) => {
 })
 
 
-const resetPassword = asyncHandler(async(req,res) => {
-    const {password} = req.body;
-    const {token} = req.params;
-    const hashedtoken = crypto.createHash('sha256').update(token).digest('hex');
-    const user = await User.findOne({
-        passwordResetToken : hashedtoken,
-        passwordResetexpires: {$gt : Date.now()}
-    });
-    if(!user) throw new Error("Token expired! Please try again later")
-    user.password = password;
-    user.passwordResetToken = undefined;
-    user.passwordResetexpires = undefined;
-    await user.save()
-    res.json(user);
-})
+const resetPassword = asyncHandler(async (req, res) => {
+  const { password } = req.body;
+  const { token } = req.params;
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: Date.now() },
+  });
+  if (!user) throw new Error(" Token Expired, Please try again later");
+  user.password = password;
+  user.passwordResetToken = undefined;
+  user.passwordResetExpires = undefined;
+  await user.save();
+  res.json(user);
+});
 
 const getWishlist = asyncHandler(async (req, res) => {
     const { _id } = req.user;
@@ -371,7 +371,16 @@ const removeProductFromCart = asyncHandler(async (req, res) => {
     throw new Error(error);
   }
 });
-
+const emptyCart = asyncHandler(async (req, res) => {
+  const { _id } = req.user;
+  validateMongoID(_id);
+  try {
+    const deleteCart = await Cart.deleteMany({userId:_id})
+    res.json(deleteCart);
+  } catch (error) {
+    throw new Error(error);
+  }
+});
 const updateProductQuantityFromCart = asyncHandler(async (req, res) => {
   //console.log(req.user);
   const { _id } = req.user;
@@ -418,12 +427,134 @@ const getMyOrders = asyncHandler(async (req, res) => {
     }
 });
 
+const getAllOrders = asyncHandler(async (req, res) => {
+  try {
+    const orders = await Order.find().populate("user")
+    //console.log(orders)
+    res.json({
+      orders
+    })
+  } catch (error) {
+    throw new Error(error);
+  }
+});
 
+const getSingleOrders = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+   try {
+    const orders = await Order.findOne({_id:id}).populate("orderItems.product").populate("orderItems.color") 
+    //console.log(orders)
+    res.json({
+      orders
+    })
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+const updateOrder = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+   try {
+    const orders = await Order.findById(id)
+    orders.orderStatus  = req.body.status;
+    await orders.save() 
+    console.log(orders)
+    res.json({
+      orders
+    })
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+
+const getMonthwiseOrderIncome = asyncHandler(async (req, res) => {
+  let monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  let d = new Date();
+  let endDate = " ";
+  d.setDate(1)
+  for (let index = 0; index < 11; index++) {
+    d.setMonth(d.getMonth() - 1)
+    endDate = monthNames[d.getMonth()] + " " + d.getFullYear() 
+  }
+  const data = await Order.aggregate([
+    {
+      $match : {
+        createdAt : {
+          $lte : new Date(),
+          $gte : new Date(endDate)
+        }
+      }
+    },{
+      $group :{
+        _id : {
+          month:"$month"
+        },amount:{
+          $sum : "$totalPriceAfterDiscount"}
+        }
+      }
+    ]);
+    res.json(data)
+})
+
+// const getMonthwiseOrderCount = asyncHandler(async (req, res) => {
+//   let monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+//   let d = new Date();
+//   let endDate = " ";
+//   d.setDate(1)
+//   for (let index = 0; index < 11; index++) {
+//     d.setMonth(d.getMonth() - 1)
+//     endDate = monthNames[d.getMonth()] + " " + d.getFullYear() 
+//   }
+//   const data = await Order.aggregate([
+//     {
+//       $match : {
+//         createdAt : {
+//           $ite : new Date(),
+//           $gte : new Date(endDate)
+//         }
+//       }
+//     },{
+//       $group :{
+//         _id : {
+//           month:"$month"
+//         },count:{
+//           $sum :1 }
+//         }
+//       }
+//     ]);
+//     res.json(data)
+// })
+const getYearlyTotalOrders = asyncHandler(async (req, res) => {
+  let monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  let d = new Date();
+  let endDate = " ";
+  d.setDate(1)
+  for (let index = 0; index < 11; index++) {
+    d.setMonth(d.getMonth() - 1)
+    endDate = monthNames[d.getMonth()] + " " + d.getFullYear() 
+  }
+  const data = await Order.aggregate([
+    {
+      $match : {
+        createdAt : {
+          $lte : new Date(),
+          $gte : new Date(endDate)
+        }
+      }
+    },{
+      $group :{
+        _id : null,
+        count:{
+          $sum : 1 },
+          amount:{$sum : "$totalPriceAfterDiscount"}
+        }
+      }
+    ]);
+    res.json(data)
+})
 
 module.exports={
     getalluser ,
     createOrder,
-   
     forgotPasswordToken , 
     resetPassword, 
     saveAddress, 
@@ -441,8 +572,14 @@ module.exports={
     userCart ,
     getUserCart,
     logout,
-    
     removeProductFromCart,
     updateProductQuantityFromCart,
-    getMyOrders
+    getMyOrders,
+    getMonthwiseOrderIncome,
+    getYearlyTotalOrders,
+    getAllOrders,
+    getSingleOrders,
+    updateOrder,
+    emptyCart
+    
 }

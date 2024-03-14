@@ -9,11 +9,11 @@ var orderSchema = new mongoose.Schema(
       required : true
     },
     shippingInfo:{
-      firstName:{
+      firstname:{
         type : String,
         required:true
       }, 
-      lastName:{
+      lastname:{
         type : String,
         required:true
       },
@@ -69,6 +69,10 @@ var orderSchema = new mongoose.Schema(
     paidAt:{
       type : Date,
       default : Date.now()
+    },
+    month:{
+      type : String,
+      default: new Date().getMonth()
     },
     totalPrice : {
       type : Number,

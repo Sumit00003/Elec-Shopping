@@ -1,19 +1,24 @@
 const express=require('express');
-const { getalluser, createuser, updateusr, singleuser, deleteuser, loginUserControl, blockUser, unblockUser, handleRefreshToken ,logout, updatePassword, forgotPasswordToken, resetPassword, loginAdmin, getWishlist, saveAddress, userCart, getUserCart, emptyCart, applyCoupon, createOrder, getOrders, updateOrderStatus, getAllOrders, removeProductFromCart, updateProductQuantityFromCart, getMyOrders } = require('../controller/usercontroller');
+const { getalluser, createuser, updateusr, singleuser, deleteuser, loginUserControl, blockUser, unblockUser, handleRefreshToken ,logout, updatePassword, forgotPasswordToken, resetPassword, loginAdmin, getWishlist, saveAddress, userCart, getUserCart, emptyCart, applyCoupon, createOrder, getOrders, updateOrderStatus, getAllOrders, removeProductFromCart, updateProductQuantityFromCart, getMyOrders, getMonthwiseOrderIncome, getYearlyTotalOrders, getSingleOrders, updateOrder } = require('../controller/usercontroller');
 const { authMiddleware ,isAdmin } = require('../middlewares/authMiddleware');
 const { checkout, paymentVerification } = require('../controller/paymentCtrl');
 const router=express.Router();
 
 
 router.delete('/delete-product-cart/:cartItemId',authMiddleware,removeProductFromCart)
-// router.delete('/emptycart',authMiddleware,emptyCart)
+router.delete('/emptycart',authMiddleware,emptyCart)
 router.delete('/update-product-cart/:cartItemId/:newQuantity',authMiddleware,updateProductQuantityFromCart)
 router.get("/refresh",handleRefreshToken);
 router.get('/logout',logout)
 router.get('/allusers',getalluser)
 router.get('/cart',authMiddleware,getUserCart)
+router.get('/getMonthWiseOrderIncome',authMiddleware,getMonthwiseOrderIncome)
+// router.get('/getMonthWiseOrderCount',authMiddleware,getMonthwiseOrderCount)
+router.get('/getYearlyOrders',authMiddleware,getYearlyTotalOrders)
 
 router.get('/getmyorder',authMiddleware,getMyOrders)
+router.get('/getallorders',authMiddleware,isAdmin,getAllOrders)
+router.get('/getaOrder/:id',authMiddleware,isAdmin ,getSingleOrders)
 // router.get('/getallorders',authMiddleware,isAdmin,getAllOrders)
 
 router.post('/cart',authMiddleware,userCart)
@@ -45,7 +50,7 @@ router.put('/save-addr',authMiddleware,saveAddress)
 router.put('/password',authMiddleware,updatePassword)
 router.put('/block-user/:id',authMiddleware,isAdmin,blockUser)
 router.put('/unblock-user/:id',authMiddleware,isAdmin,unblockUser)
-// router.put('/order/update-order/:id',authMiddleware,isAdmin,updateOrderStatus)
+router.put('/updateorder/:id',authMiddleware,isAdmin,updateOrder)
 
 
 
